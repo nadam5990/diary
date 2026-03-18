@@ -2,18 +2,61 @@ const btnVoice = document.getElementById('btn-voice');
 const diaryInput = document.getElementById('diary-input');
 const responseBox = document.querySelector('.response-box');
 
-// 1. 페이지 로드 시 로컬 스토리지에 저장된 데이터 불러오기
-window.addEventListener('DOMContentLoaded', () => {
-    const savedDiary = localStorage.getItem('emotion_diary_text');
-    const savedResponse = localStorage.getItem('emotion_diary_response');
+let diaries = JSON.parse(localStorage.getItem('emotion_diaries')) || {};
+let currentDay = '';
+const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-    if (savedDiary) {
-        diaryInput.value = savedDiary;
-    }
-    if (savedResponse) {
-        responseBox.innerHTML = savedResponse;
-    }
+// 1. 페이지 로드 시 로컬 스토리지에 저장된 데이터 불러오기 (요일별)
+window.addEventListener('DOMContentLoaded', () => {
+    // 오늘 요일 구하기
+    const todayIndex = new Date().getDay();
+    currentDay = dayNames[todayIndex];
+
+    setupDayTabs();
+    loadDiaryForDay(currentDay);
 });
+
+function setupDayTabs() {
+    const tabs = document.querySelectorAll('.day-tab');
+    tabs.forEach(tab => {
+        if (tab.dataset.day === currentDay) {
+            tab.classList.add('active');
+        }
+        
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            currentDay = tab.dataset.day;
+            loadDiaryForDay(currentDay);
+        });
+    });
+}
+
+function loadDiaryForDay(day) {
+    const data = diaries[day];
+    if (data) {
+        diaryInput.value = data.text || '';
+        responseBox.innerHTML = data.response || '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
+    } else {
+        diaryInput.value = '';
+        responseBox.innerHTML = '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
+    }
+}
+
+// 새 일기 쓰기 버튼
+const btnNewDiary = document.getElementById('btn-new-diary');
+if (btnNewDiary) {
+    btnNewDiary.addEventListener('click', () => {
+        if (confirm('현재 작성 중인 전체 내용이 지워지며 새 일기를 씁니다. 계속하시겠습니까?')) {
+            diaryInput.value = '';
+            responseBox.innerHTML = '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
+            // 만약 현재 요일의 데이터도 삭제하려면 아래 주석 해제
+            // delete diaries[currentDay];
+            // localStorage.setItem('emotion_diaries', JSON.stringify(diaries));
+        }
+    });
+}
 
 // 브라우저가 Web Speech API를 지원하는지 확인 (크롬 등은 webkit 접두사 사용)
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -142,9 +185,12 @@ btnAnalyze.addEventListener('click', async () => {
         const formattedResponse = data.result.replace(/\n/g, '<br>');
         responseBox.innerHTML = formattedResponse;
         
-        // 2. 일기 내용과 AI 답변을 로컬 스토리지에 저장
-        localStorage.setItem('emotion_diary_text', text);
-        localStorage.setItem('emotion_diary_response', formattedResponse);
+        // 2. 일기 내용과 AI 답변을 로컬 스토리지에 현재 요일에 맞게 저장
+        diaries[currentDay] = {
+            text: text,
+            response: formattedResponse
+        };
+        localStorage.setItem('emotion_diaries', JSON.stringify(diaries));
         
     } catch (error) {
         console.error('Error analyzing text:', error);

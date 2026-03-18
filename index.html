@@ -16,6 +16,26 @@
 
         <main>
             <div class="input-section">
+                <!-- 요일 탭 및 새 일기 쓰기 버튼 -->
+                <div class="diary-controls">
+                    <div class="day-tabs" id="day-tabs">
+                        <button class="day-tab" data-day="월">월</button>
+                        <button class="day-tab" data-day="화">화</button>
+                        <button class="day-tab" data-day="수">수</button>
+                        <button class="day-tab" data-day="목">목</button>
+                        <button class="day-tab" data-day="금">금</button>
+                        <button class="day-tab" data-day="토">토</button>
+                        <button class="day-tab" data-day="일">일</button>
+                    </div>
+                    <button id="btn-new-diary" class="btn secondary outline-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        새 일기 쓰기
+                    </button>
+                </div>
+
                 <!-- 2. 사용자가 여러 줄의 텍스트를 입력할 수 있는 넓은 입력창(textarea) -->
                 <textarea id="diary-input" placeholder="여기에 오늘 하루의 감정과 일상을 자유롭게 적어주세요..."></textarea>
                 
