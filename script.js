@@ -2,15 +2,24 @@ const btnVoice = document.getElementById('btn-voice');
 const diaryInput = document.getElementById('diary-input');
 const responseBox = document.querySelector('.response-box');
 
-let diaries = JSON.parse(localStorage.getItem('emotion_diaries')) || {};
+let diaries = {};
 let currentDay = '';
 const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-// 1. 페이지 로드 시 로컬 스토리지에 저장된 데이터 불러오기 (요일별)
-window.addEventListener('DOMContentLoaded', () => {
+// 1. 페이지 로드 시 클라우드(DB)에서 저장된 데이터 불러오기 (요일별)
+window.addEventListener('DOMContentLoaded', async () => {
     // 오늘 요일 구하기
     const todayIndex = new Date().getDay();
     currentDay = dayNames[todayIndex];
+
+    try {
+        const res = await fetch('/api/get-diary');
+        if (res.ok) {
+            diaries = await res.json();
+        }
+    } catch (error) {
+        console.error('Failed to load from DB:', error);
+    }
 
     setupDayTabs();
     loadDiaryForDay(currentDay);
@@ -51,9 +60,9 @@ if (btnNewDiary) {
         if (confirm('현재 작성 중인 전체 내용이 지워지며 새 일기를 씁니다. 계속하시겠습니까?')) {
             diaryInput.value = '';
             responseBox.innerHTML = '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
-            // 만약 현재 요일의 데이터도 삭제하려면 아래 주석 해제
+            // DB 항목을 지우고 싶다면 아래 코드를 사용해 업데이트 가능
             // delete diaries[currentDay];
-            // localStorage.setItem('emotion_diaries', JSON.stringify(diaries));
+            // fetch('/api/save-diary', { method: 'POST', body: JSON.stringify({ diaries }), headers: { 'Content-Type': 'application/json' } });
         }
     });
 }
@@ -185,12 +194,17 @@ btnAnalyze.addEventListener('click', async () => {
         const formattedResponse = data.result.replace(/\n/g, '<br>');
         responseBox.innerHTML = formattedResponse;
         
-        // 2. 일기 내용과 AI 답변을 로컬 스토리지에 현재 요일에 맞게 저장
+        // 2. 일기 내용과 AI 답변을 클라우드 DB에 현재 요일에 맞게 저장
         diaries[currentDay] = {
             text: text,
             response: formattedResponse
         };
-        localStorage.setItem('emotion_diaries', JSON.stringify(diaries));
+        
+        await fetch('/api/save-diary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ diaries })
+        });
         
     } catch (error) {
         console.error('Error analyzing text:', error);
