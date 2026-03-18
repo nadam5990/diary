@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 감정일기</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="title">오늘의 하루는 어땠나요?</h1>
+            <p class="subtitle">당신의 감정을 솔직하게 기록해보세요.</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <!-- 2. 사용자가 여러 줄의 텍스트를 입력할 수 있는 넓은 입력창(textarea) -->
+                <textarea id="diary-input" placeholder="여기에 오늘 하루의 감정과 일상을 자유롭게 적어주세요..."></textarea>
+                
+                <div class="button-group">
+                    <!-- 3. '음성으로 입력하기' 버튼 -->
+                    <button id="btn-voice" class="btn secondary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                        음성으로 입력하기
+                    </button>
+                    <!-- 3. '분석 요청하기' 버튼 -->
+                    <button id="btn-analyze" class="btn primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                        </svg>
+                        분석 요청하기
+                    </button>
+                </div>
+            </div>
+
+            <div class="response-section">
+                <!-- 4. 'AI의 답변'이라는 소제목 -->
+                <h2 class="response-title">AI의 답변</h2>
+                <!-- 4. AI 답변이 표시될 회색 배경 박스 및 문구 -->
+                <div class="response-box">
+                    여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
