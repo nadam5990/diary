@@ -16,17 +16,8 @@
 
         <main>
             <div class="input-section">
-                <!-- 요일 탭 및 새 일기 쓰기 버튼 -->
-                <div class="diary-controls">
-                    <div class="day-tabs" id="day-tabs">
-                        <button class="day-tab" data-day="월">월</button>
-                        <button class="day-tab" data-day="화">화</button>
-                        <button class="day-tab" data-day="수">수</button>
-                        <button class="day-tab" data-day="목">목</button>
-                        <button class="day-tab" data-day="금">금</button>
-                        <button class="day-tab" data-day="토">토</button>
-                        <button class="day-tab" data-day="일">일</button>
-                    </div>
+                <!-- 새 일기 쓰기 버튼 -->
+                <div class="diary-controls" style="justify-content: flex-end;">
                     <button id="btn-new-diary" class="btn secondary outline-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -67,6 +58,13 @@
                 <!-- 4. AI 답변이 표시될 회색 배경 박스 및 문구 -->
                 <div class="response-box">
                     여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘
+                </div>
+            </div>
+
+            <div class="history-section" id="history-section">
+                <h2 class="response-title">나의 일기 히스토리</h2>
+                <div class="history-list" id="history-list">
+                    <!-- 히스토리 카드들이 동적으로 추가됩니다 -->
                 </div>
             </div>
         </main>

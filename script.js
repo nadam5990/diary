@@ -2,54 +2,53 @@ const btnVoice = document.getElementById('btn-voice');
 const diaryInput = document.getElementById('diary-input');
 const responseBox = document.querySelector('.response-box');
 
-let diaries = {};
-let currentDay = '';
-const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-
-// 1. 페이지 로드 시 클라우드(DB)에서 저장된 데이터 불러오기 (요일별)
-window.addEventListener('DOMContentLoaded', async () => {
-    // 오늘 요일 구하기
-    const todayIndex = new Date().getDay();
-    currentDay = dayNames[todayIndex];
-
-    try {
-        const res = await fetch('/api/get-diary');
-        if (res.ok) {
-            diaries = await res.json();
-        }
-    } catch (error) {
-        console.error('Failed to load from DB:', error);
-    }
-
-    setupDayTabs();
-    loadDiaryForDay(currentDay);
+// 1. 페이지 로드 시 히스토리 불러오기
+window.addEventListener('DOMContentLoaded', () => {
+    loadHistory();
 });
 
-function setupDayTabs() {
-    const tabs = document.querySelectorAll('.day-tab');
-    tabs.forEach(tab => {
-        if (tab.dataset.day === currentDay) {
-            tab.classList.add('active');
+async function loadHistory() {
+    const historyList = document.getElementById('history-list');
+    if (!historyList) return;
+    
+    // 로딩 표시
+    historyList.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 2rem;">히스토리를 불러오는 중입니다...</div>';
+    
+    try {
+        const res = await fetch('/api/history');
+        if (!res.ok) throw new Error('Failed to fetch history');
+        
+        const historyData = await res.json();
+        
+        if (historyData.length === 0) {
+            historyList.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 2rem;">아직 작성된 일기가 없습니다. 첫 일기를 기록해보세요!</div>';
+            return;
         }
         
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
+        historyList.innerHTML = ''; // 리스트 초기화
+        
+        historyData.forEach(item => {
+            const dateObj = new Date(item.created_at);
+            const dateString = dateObj.toLocaleString('ko-KR', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
             
-            currentDay = tab.dataset.day;
-            loadDiaryForDay(currentDay);
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            
+            card.innerHTML = `
+                <div class="history-date">${dateString}</div>
+                <div class="history-text">${item.original_text.replace(/\n/g, '<br>')}</div>
+                <div class="history-response">${item.ai_response.replace(/\n/g, '<br>')}</div>
+            `;
+            
+            historyList.appendChild(card);
         });
-    });
-}
-
-function loadDiaryForDay(day) {
-    const data = diaries[day];
-    if (data) {
-        diaryInput.value = data.text || '';
-        responseBox.innerHTML = data.response || '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
-    } else {
-        diaryInput.value = '';
-        responseBox.innerHTML = '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
+        
+    } catch (error) {
+        console.error('History load error:', error);
+        historyList.innerHTML = '<div style="text-align:center; color:#ef4444; padding: 2rem;">히스토리를 불러오는데 실패했습니다. (DB 연결 설정을 확인해주세요)</div>';
     }
 }
 
@@ -60,9 +59,6 @@ if (btnNewDiary) {
         if (confirm('현재 작성 중인 전체 내용이 지워지며 새 일기를 씁니다. 계속하시겠습니까?')) {
             diaryInput.value = '';
             responseBox.innerHTML = '여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘';
-            // DB 항목을 지우고 싶다면 아래 코드를 사용해 업데이트 가능
-            // delete diaries[currentDay];
-            // fetch('/api/save-diary', { method: 'POST', body: JSON.stringify({ diaries }), headers: { 'Content-Type': 'application/json' } });
         }
     });
 }
@@ -194,17 +190,8 @@ btnAnalyze.addEventListener('click', async () => {
         const formattedResponse = data.result.replace(/\n/g, '<br>');
         responseBox.innerHTML = formattedResponse;
         
-        // 2. 일기 내용과 AI 답변을 클라우드 DB에 현재 요일에 맞게 저장
-        diaries[currentDay] = {
-            text: text,
-            response: formattedResponse
-        };
-        
-        await fetch('/api/save-diary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ diaries })
-        });
+        // 저장은 이미 백엔드(api/analyze.js)에서 처리되었으므로 프론트는 히스토리만 새로고침하면 됩니다.
+        loadHistory();
         
     } catch (error) {
         console.error('Error analyzing text:', error);

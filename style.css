@@ -92,34 +92,56 @@ header {
     gap: 1rem;
 }
 
-.day-tabs {
+/* History Section */
+.history-section {
+    border-top: 1px solid var(--glass-border);
+    padding-top: 2.5rem;
+    margin-top: 2.5rem;
+    animation: slideUp 0.6s ease-out 0.4s both;
+}
+
+.history-list {
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
-.day-tab {
-    background: var(--btn-secondary-bg);
-    color: var(--text-secondary);
+.history-card {
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 0.5rem 1rem;
-    font-size: 0.95rem;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.history-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.history-date {
+    font-size: 0.9rem;
+    color: var(--accent-light, #a78bfa);
+    margin-bottom: 0.75rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.day-tab:hover {
-    background: rgba(255, 255, 255, 0.1);
+.history-text {
+    font-size: 1.05rem;
     color: var(--text-primary);
+    margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
-.day-tab.active {
-    background: var(--accent-color);
-    color: white;
-    border-color: var(--accent-hover);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+.history-response {
+    background: var(--response-bg);
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 1rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .outline-btn {
