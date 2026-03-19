@@ -1,4 +1,11 @@
 import { GoogleGenAI } from '@google/genai';
+import Redis from 'ioredis';
+
+// Vercel Serverless Function 환경에서는 연결을 재사용하는 것이 권장됩니다.
+let redis = null;
+if (process.env.REDIS_URL) {
+    redis = new Redis(process.env.REDIS_URL);
+}
 
 export default async function handler(req, res) {
     // CORS 설정 (Vercel 환경 지원)
@@ -10,7 +17,6 @@ export default async function handler(req, res) {
         'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
     );
 
-    // OPTIONS 요청에 대한 빠른 응답 (CORS Preflight)
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
@@ -37,7 +43,35 @@ export default async function handler(req, res) {
             contents: prompt,
         });
 
-        res.status(200).json({ result: response.text });
+        const aiResponseText = response.text;
+
+        // Redis 저장 로직 (REDIS_URL 존재 시)
+        if (redis) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timestamps = `${month}${day}${hours}${minutes}${seconds}`;
+            
+            // 저장 키 예시: diary-2024-0319082530
+            const key = `diary-${year}-${timestamps}`;
+            
+            const payload = {
+                original_text: text,
+                ai_response: aiResponseText,
+                created_at: now.toISOString()
+            };
+            
+            await redis.set(key, JSON.stringify(payload));
+            console.log(`Saved successfully to Redis key: ${key}`);
+        } else {
+            console.warn('REDIS_URL is not defined in environment variables. Skipping Redis save.');
+        }
+
+        res.status(200).json({ result: aiResponseText });
     } catch (error) {
         console.error('Error generating content:', error);
         res.status(500).json({ error: 'Failed to analyze text.' });
