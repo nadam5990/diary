@@ -1,4 +1,4 @@
-import { createSupabaseAuthClient, createSupabaseServiceClient } from './supabase-clients.js';
+import { createSupabaseAuthClient } from './supabase-clients.js';
 
 const ACCESS_COOKIE = 'day5-access-token';
 const REFRESH_COOKIE = 'day5-refresh-token';
@@ -42,13 +42,21 @@ export function buildExpiredSessionCookies() {
 }
 
 export async function registerUser({ email, password, name }) {
-    const adminClient = createSupabaseServiceClient();
-    const { data, error } = await adminClient.auth.admin.createUser({
-        email,
+    const supabase = createSupabaseAuthClient();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedName = String(name || '').trim();
+
+    if (!normalizedName) {
+        throw new Error('닉네임을 입력해 주세요.');
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
         password,
-        email_confirm: true,
-        user_metadata: {
-            name: String(name || '').trim(),
+        options: {
+            data: {
+                name: normalizedName,
+            },
         },
     });
 
@@ -56,24 +64,40 @@ export async function registerUser({ email, password, name }) {
         throw new Error(error.message);
     }
 
-    const loginResult = await loginUser({ email, password });
+    const user = data.user ? toPublicUser(data.user) : null;
+    const session = data.session || null;
 
     return {
-        user: data.user ? toPublicUser(data.user) : loginResult.user,
-        session: loginResult.session,
-        pendingConfirmation: false,
+        user,
+        session,
+        pendingConfirmation: !session,
     };
+}
+
+function mapLoginErrorMessage(error) {
+    const message = String(error?.message || '');
+
+    if (/Email not confirmed/i.test(message)) {
+        return '이메일 인증을 완료한 뒤 로그인해 주세요.';
+    }
+
+    if (/Invalid login credentials/i.test(message)) {
+        return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    }
+
+    return message || '로그인에 실패했습니다.';
 }
 
 export async function loginUser({ email, password }) {
     const supabase = createSupabaseAuthClient();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
     const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
     });
 
     if (error) {
-        throw new Error(error.message);
+        throw new Error(mapLoginErrorMessage(error));
     }
 
     return {
