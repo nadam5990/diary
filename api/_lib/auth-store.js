@@ -106,6 +106,24 @@ export async function loginUser({ email, password }) {
     };
 }
 
+export async function createSessionFromTokens({ access_token, refresh_token }) {
+    const supabase = createSupabaseAuthClient();
+    const { data, error } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+    });
+
+    const user = data.user || data.session?.user;
+    if (error || !data.session || !user) {
+        throw new Error('구글 로그인 세션을 확인하지 못했습니다.');
+    }
+
+    return {
+        user: toPublicUser(user),
+        session: data.session,
+    };
+}
+
 export async function getAuthenticatedUser(req) {
     const accessToken = req.cookies?.[ACCESS_COOKIE];
     const refreshToken = req.cookies?.[REFRESH_COOKIE];
