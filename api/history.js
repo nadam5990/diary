@@ -1,12 +1,7 @@
-import Redis from 'ioredis';
-
-let redis = null;
-if (process.env.REDIS_URL) {
-    redis = new Redis(process.env.REDIS_URL);
-}
+import { buildExpiredSessionCookies, getAuthenticatedUser } from './_lib/auth-store.js';
+import { listDiaryEntries } from './_lib/diary-store.js';
 
 export default async function handler(req, res) {
-    // CORS 설정
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -25,28 +20,23 @@ export default async function handler(req, res) {
     }
 
     try {
-        if (!redis) {
-            return res.status(500).json({ error: 'REDIS_URL is not configured' });
+        const auth = await getAuthenticatedUser(req);
+        if (auth.setCookies) {
+            res.setHeader('Set-Cookie', auth.setCookies);
         }
 
-        // 'diary-*' 패턴과 일치하는 모든 키 가져오기
-        const keys = await redis.keys('diary-*');
-        if (keys.length === 0) {
-            return res.status(200).json([]);
+        if (!auth.user) {
+            if (auth.clearCookies) {
+                res.setHeader('Set-Cookie', buildExpiredSessionCookies());
+            }
+
+            return res.status(401).json({ error: '로그인이 필요합니다.' });
         }
 
-        // 키를 사용해 모든 데이터를 일괄 가져오기
-        const values = await redis.mget(keys);
-
-        // JSON 파싱 후, created_at 기준으로 최신순 정렬
-        const history = values
-            .filter(val => val !== null)
-            .map(val => JSON.parse(val))
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+        const history = await listDiaryEntries(auth.user.id);
         res.status(200).json(history);
     } catch (error) {
         console.error('Error fetching history:', error);
-        res.status(500).json({ error: 'Failed to fetch diary history.' });
+        res.status(500).json({ error: error.message || 'Failed to fetch diary history.' });
     }
 }

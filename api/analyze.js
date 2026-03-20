@@ -1,14 +1,8 @@
-import { GoogleGenAI } from '@google/genai';
-import Redis from 'ioredis';
-
-// Vercel Serverless Function 환경에서는 연결을 재사용하는 것이 권장됩니다.
-let redis = null;
-if (process.env.REDIS_URL) {
-    redis = new Redis(process.env.REDIS_URL);
-}
+import OpenAI from 'openai';
+import { buildExpiredSessionCookies, getAuthenticatedUser } from './_lib/auth-store.js';
+import { saveDiaryEntry } from './_lib/diary-store.js';
 
 export default async function handler(req, res) {
-    // CORS 설정 (Vercel 환경 지원)
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -27,53 +21,69 @@ export default async function handler(req, res) {
     }
 
     try {
+        const auth = await getAuthenticatedUser(req);
+        if (auth.setCookies) {
+            res.setHeader('Set-Cookie', auth.setCookies);
+        }
+
+        if (!auth.user) {
+            if (auth.clearCookies) {
+                res.setHeader('Set-Cookie', buildExpiredSessionCookies());
+            }
+
+            return res.status(401).json({ error: '로그인이 필요합니다.' });
+        }
+
         const { text } = req.body;
-        
+
         if (!text) {
             return res.status(400).json({ error: 'Text is required for analysis.' });
         }
 
-        // Vercel 환경 변수에서 가져온 API 키로 초기화
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        
-        const prompt = `너는 심리 상담가야. 사용자가 작성한 일기 내용을 읽고, 사용자의 감정을 한 단어(예: 기쁨, 슬픔, 분노, 불안, 평온)로 요약해줘. 그리고 그 감정에 공감해주고, 따뜻한 응원의 메세지를 2~3문장으로 작성해줘. 답변 형식은 반드시 '감정: (요약된 감정)\n\n(응원 메시지)' 와 같이 줄바꿈을 포함해서 보내줘.\n\n사용자 일기 내용: "${text}"`;
+        if (!process.env.OPENAI_API_KEY) {
+            return res.status(500).json({ error: 'OPENAI_API_KEY is not configured.' });
+        }
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
+        const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const instructions = [
+            'You are a warm and empathetic journaling assistant.',
+            'Read the user diary entry and identify the single dominant emotion.',
+            'Choose one Korean emotion label from: 기쁨, 슬픔, 분노, 불안, 평온.',
+            'Then write 2-3 supportive sentences in Korean.',
+            'Output exactly in this format with one blank line between sections:',
+            '감정: <emotion>',
+            '<supportive message>',
+        ].join('\n');
+
+        const response = await client.responses.create({
+            model: 'gpt-5-mini',
+            reasoning: { effort: 'low' },
+            instructions,
+            input: text,
         });
 
-        const aiResponseText = response.text;
+        const aiResponseText = response.output_text?.trim();
+        if (!aiResponseText) {
+            throw new Error('OpenAI response was empty.');
+        }
 
-        // Redis 저장 로직 (REDIS_URL 존재 시)
-        if (redis) {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const timestamps = `${month}${day}${hours}${minutes}${seconds}`;
-            
-            // 저장 키 예시: diary-2024-0319082530
-            const key = `diary-${year}-${timestamps}`;
-            
-            const payload = {
-                original_text: text,
-                ai_response: aiResponseText,
-                created_at: now.toISOString()
-            };
-            
-            await redis.set(key, JSON.stringify(payload));
-            console.log(`Saved successfully to Redis key: ${key}`);
+        const payload = {
+            original_text: text,
+            ai_response: aiResponseText,
+            created_at: new Date().toISOString(),
+        };
+
+        const saveResult = await saveDiaryEntry(auth.user, payload);
+
+        if (saveResult.backend === 'none') {
+            console.warn('No diary storage is configured. Skipping save.');
         } else {
-            console.warn('REDIS_URL is not defined in environment variables. Skipping Redis save.');
+            console.log(`Saved successfully to ${saveResult.backend} key: ${saveResult.key}`);
         }
 
         res.status(200).json({ result: aiResponseText });
     } catch (error) {
         console.error('Error generating content:', error);
-        res.status(500).json({ error: 'Failed to analyze text.' });
+        res.status(500).json({ error: error.message || 'Failed to analyze text.' });
     }
 }

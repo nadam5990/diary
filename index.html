@@ -15,58 +15,96 @@
         </header>
 
         <main>
-            <div class="input-section">
-                <!-- 새 일기 쓰기 버튼 -->
-                <div class="diary-controls" style="justify-content: flex-end;">
-                    <button id="btn-new-diary" class="btn secondary outline-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        새 일기 쓰기
-                    </button>
+            <section class="auth-section" id="auth-section">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <p class="auth-eyebrow">Private Journal</p>
+                        <h2 id="auth-title">로그인하고 내 기록을 이어보세요</h2>
+                        <p id="auth-description">같은 계정으로 접속하면 내 일기와 AI 답변 히스토리를 계속 볼 수 있습니다.</p>
+                    </div>
+
+                    <div class="auth-tabs">
+                        <button id="tab-login" class="auth-tab active" type="button">로그인</button>
+                        <button id="tab-register" class="auth-tab" type="button">회원가입</button>
+                    </div>
+
+                    <form id="auth-form" class="auth-form">
+                        <label class="auth-label hidden" id="field-name">
+                            닉네임
+                            <input id="auth-name" class="auth-input" type="text" placeholder="표시할 이름을 입력하세요" maxlength="30">
+                        </label>
+
+                        <label class="auth-label">
+                            이메일
+                            <input id="auth-email" class="auth-input" type="email" placeholder="name@example.com" autocomplete="email" required>
+                        </label>
+
+                        <label class="auth-label">
+                            비밀번호
+                            <input id="auth-password" class="auth-input" type="password" placeholder="6자 이상 입력하세요" autocomplete="current-password" required>
+                        </label>
+
+                        <button id="auth-submit" class="btn primary auth-submit" type="submit">로그인</button>
+                        <p id="auth-feedback" class="auth-feedback" aria-live="polite"></p>
+                    </form>
+                </div>
+            </section>
+
+            <section class="app-shell hidden" id="app-shell">
+                <div class="user-bar">
+                    <div>
+                        <p class="user-label">현재 로그인</p>
+                        <strong id="user-name">사용자</strong>
+                        <p id="user-email" class="user-email">user@example.com</p>
+                    </div>
+                    <button id="btn-logout" class="btn secondary outline-btn" type="button">로그아웃</button>
                 </div>
 
-                <!-- 2. 사용자가 여러 줄의 텍스트를 입력할 수 있는 넓은 입력창(textarea) -->
-                <textarea id="diary-input" placeholder="여기에 오늘 하루의 감정과 일상을 자유롭게 적어주세요..."></textarea>
-                
-                <div class="button-group">
-                    <!-- 3. '음성으로 입력하기' 버튼 -->
-                    <button id="btn-voice" class="btn secondary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                            <line x1="12" y1="19" x2="12" y2="23"></line>
-                            <line x1="8" y1="23" x2="16" y2="23"></line>
-                        </svg>
-                        음성으로 입력하기
-                    </button>
-                    <!-- 3. '분석 요청하기' 버튼 -->
-                    <button id="btn-analyze" class="btn primary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
-                        </svg>
-                        분석 요청하기
-                    </button>
-                </div>
-            </div>
+                <div class="input-section">
+                    <div class="diary-controls" style="justify-content: flex-end;">
+                        <button id="btn-new-diary" class="btn secondary outline-btn" type="button">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            새 일기 쓰기
+                        </button>
+                    </div>
 
-            <div class="response-section">
-                <!-- 4. 'AI의 답변'이라는 소제목 -->
-                <h2 class="response-title">AI의 답변</h2>
-                <!-- 4. AI 답변이 표시될 회색 배경 박스 및 문구 -->
-                <div class="response-box">
-                    여기에는 "AI 의 답변이 표시됩니다."라고 쓰여있게 해줘
+                    <textarea id="diary-input" placeholder="여기에 오늘 하루의 감정과 일상을 자유롭게 적어주세요..."></textarea>
+                    
+                    <div class="button-group">
+                        <button id="btn-voice" class="btn secondary" type="button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                            음성으로 입력하기
+                        </button>
+                        <button id="btn-analyze" class="btn primary" type="button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                            </svg>
+                            분석 요청하기
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="history-section" id="history-section">
-                <h2 class="response-title">나의 일기 히스토리</h2>
-                <div class="history-list" id="history-list">
-                    <!-- 히스토리 카드들이 동적으로 추가됩니다 -->
+                <div class="response-section">
+                    <h2 class="response-title">AI의 답변</h2>
+                    <div class="response-box" id="response-box">
+                        여기에 AI의 따뜻한 응답이 표시됩니다.
+                    </div>
                 </div>
-            </div>
+
+                <div class="history-section" id="history-section">
+                    <h2 class="response-title">나의 일기 히스토리</h2>
+                    <div class="history-list" id="history-list"></div>
+                </div>
+            </section>
         </main>
     </div>
     <script src="script.js"></script>
