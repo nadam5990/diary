@@ -4,12 +4,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import analyzeHandler from './api/analyze.js';
-import authConfigHandler from './api/auth-config.js';
-import loginHandler from './api/auth-login.js';
-import logoutHandler from './api/auth-logout.js';
-import meHandler from './api/auth-me.js';
-import registerHandler from './api/auth-register.js';
-import authSessionHandler from './api/auth-session.js';
+import authConfigHandler from './api/auth/config.js';
+import loginHandler from './api/auth/login.js';
+import logoutHandler from './api/auth/logout.js';
+import meHandler from './api/auth/me.js';
+import registerHandler from './api/auth/register.js';
+import authSessionHandler from './api/auth/session.js';
 import historyHandler from './api/history.js';
 
 const __filename = fileURLToPath(import.meta.url);
